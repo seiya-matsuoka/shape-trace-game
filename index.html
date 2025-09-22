@@ -1,13 +1,86 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <title>shape-trace-game</title>
+    <link rel="stylesheet" href="./src/style.css" />
   </head>
-  <body>
-    <div id="app"></div>
+  <body class="min-h-screen">
+    <header class="border-b bg-white/70 backdrop-blur dark:bg-slate-900/70">
+      <div class="container mx-auto flex items-center gap-3 px-4 py-3">
+        <h1 class="text-xl font-semibold tracking-tight md:text-2xl">
+          shape-trace-game
+        </h1>
+      </div>
+    </header>
+
+    <main class="container mx-auto grid gap-6 px-4 py-6 md:grid-cols-3">
+      <!-- Controls -->
+      <section class="space-y-4 md:col-span-1">
+        <div class="space-y-2">
+          <label for="shapeSelect" class="block text-sm font-medium"
+            >形状</label
+          >
+          <select
+            id="shapeSelect"
+            class="w-full rounded-md border-slate-300 dark:border-slate-700"
+          >
+            <option value="circle">丸</option>
+            <option value="triangle">三角</option>
+            <option value="square">四角</option>
+            <option value="star">星</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            id="ghostToggle"
+            type="checkbox"
+            class="rounded border-slate-300 dark:border-slate-700"
+            checked
+          />
+          <label for="ghostToggle" class="text-sm"
+            >手本（ゴースト）を表示</label
+          >
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="clearBtn"
+            class="rounded-md bg-slate-800 px-3 py-2 text-white hover:opacity-90"
+          >
+            クリア
+          </button>
+          <button
+            id="scoreBtn"
+            class="rounded-md bg-indigo-600 px-3 py-2 text-white hover:opacity-90"
+          >
+            スコア判定
+          </button>
+          <output id="scoreOut" class="ml-1 text-lg font-semibold">—</output>
+        </div>
+
+        <p class="text-xs opacity-70">
+          一筆書きで描いてください。描き直す場合は「クリア」。スマホ/タブレットではスワイプで描けます。
+        </p>
+      </section>
+
+      <!-- Canvas -->
+      <section class="md:col-span-2">
+        <!-- 正方形を維持するラッパ -->
+        <div
+          class="aspect-square relative w-full overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-slate-800"
+        >
+          <canvas
+            id="drawCanvas"
+            class="z-10 block h-full w-full touch-none select-none"
+          ></canvas>
+        </div>
+      </section>
+    </main>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
