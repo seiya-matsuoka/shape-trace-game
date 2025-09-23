@@ -26,6 +26,10 @@ const scoreBar = document.getElementById("scoreBar") as HTMLDivElement;
 const dctx = drawCanvas.getContext("2d")!;
 const sctx = sampleCanvas.getContext("2d")!;
 
+const sizeSelect = document.getElementById("sizeSelect") as HTMLSelectElement;
+
+let sizeKey: "lg" | "sm" = "lg";
+
 /** ---------- 状態 ---------- */
 let shape: Shape = "circle";
 let userPath: Point[] = [];
@@ -59,8 +63,8 @@ function resizeCanvasEl(cv: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
 function updateTemplates() {
   const rD = drawCanvas.getBoundingClientRect();
   const rS = sampleCanvas.getBoundingClientRect();
-  templatePath = generateTemplate(shape, rD.width, rD.height, 24);
-  templateSample = generateTemplate(shape, rS.width, rS.height, 24);
+  templatePath = generateTemplate(shape, rD.width, rD.height, 24, sizeKey);
+  templateSample = generateTemplate(shape, rS.width, rS.height, 24, sizeKey);
 }
 
 /** ---------- ガイド描画 ---------- */
@@ -353,6 +357,12 @@ function init() {
   // UI
   shapeSelect.addEventListener("change", () => {
     shape = shapeSelect.value as Shape;
+    updateTemplates();
+    clearAll();
+  });
+
+  sizeSelect.addEventListener("change", () => {
+    sizeKey = (sizeSelect.value as "lg" | "sm") ?? "lg";
     updateTemplates();
     clearAll();
   });
