@@ -2,108 +2,180 @@ import type { Point, Shape } from "./shapes";
 import { generateTemplate, strokePolyline } from "./shapes";
 
 /** ---------- 要素取得 ---------- */
-const canvas = document.getElementById("drawCanvas") as HTMLCanvasElement;
+const drawCanvas = document.getElementById("drawCanvas") as HTMLCanvasElement;
+const sampleCanvas = document.getElementById(
+  "sampleCanvas",
+) as HTMLCanvasElement;
+
 const shapeSelect = document.getElementById("shapeSelect") as HTMLSelectElement;
-const ghostToggle = document.getElementById("ghostToggle") as HTMLInputElement;
 const clearBtn = document.getElementById("clearBtn") as HTMLButtonElement;
-const scoreBtn = document.getElementById("scoreBtn") as HTMLButtonElement;
+
+const toggleGhostBtn = document.getElementById(
+  "toggleGhost",
+) as HTMLButtonElement;
+const toggleGridBtn = document.getElementById(
+  "toggleGrid",
+) as HTMLButtonElement;
+const toggleCrossBtn = document.getElementById(
+  "toggleCross",
+) as HTMLButtonElement;
+
 const scoreOut = document.getElementById("scoreOut") as HTMLOutputElement;
+const scoreBar = document.getElementById("scoreBar") as HTMLDivElement;
 
-const ctx = canvas.getContext("2d")!;
-let dpr = Math.max(1, window.devicePixelRatio || 1);
+const dctx = drawCanvas.getContext("2d")!;
+const sctx = sampleCanvas.getContext("2d")!;
 
-// 状態
+/** ---------- 状態 ---------- */
 let shape: Shape = "circle";
 let userPath: Point[] = [];
-let templatePath: Point[] = [];
+let templatePath: Point[] = []; // 描画エリア用
+let templateSample: Point[] = []; // 手本エリア用
 let isDrawing = false;
 let isCompleted = false;
 
-/** ---------- サイズとDPR対応 ---------- */
-function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
+let showGhost = true;
+let showGrid = true;
+let showCross = true;
+
+/** ---------- DPR / リサイズ ---------- */
+function resizeCanvasEl(cv: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+  const rect = cv.getBoundingClientRect();
   const cssW = Math.max(1, Math.floor(rect.width));
   const cssH = Math.max(1, Math.floor(rect.height));
   const newDpr = Math.max(1, window.devicePixelRatio || 1);
 
   if (
-    canvas.width !== Math.floor(cssW * newDpr) ||
-    canvas.height !== Math.floor(cssH * newDpr)
+    cv.width !== Math.floor(cssW * newDpr) ||
+    cv.height !== Math.floor(cssH * newDpr)
   ) {
-    dpr = newDpr;
-    canvas.width = Math.floor(cssW * dpr);
-    canvas.height = Math.floor(cssH * dpr);
+    cv.width = Math.floor(cssW * newDpr);
+    cv.height = Math.floor(cssH * newDpr);
   }
-  // CSS px座標で描けるようにコンテキストをDPRスケール
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // CSSピクセルで扱えるようにDPR分スケール
+  ctx.setTransform(newDpr, 0, 0, newDpr, 0, 0);
 }
 
-/** ---------- テンプレ生成 ---------- */
-function updateTemplate() {
-  const rect = canvas.getBoundingClientRect();
-  templatePath = generateTemplate(shape, rect.width, rect.height, 24);
+function updateTemplates() {
+  const rD = drawCanvas.getBoundingClientRect();
+  const rS = sampleCanvas.getBoundingClientRect();
+  templatePath = generateTemplate(shape, rD.width, rD.height, 24);
+  templateSample = generateTemplate(shape, rS.width, rS.height, 24);
+}
+
+/** ---------- ガイド描画 ---------- */
+function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const step = Math.max(24, Math.floor(Math.min(w, h) / 12));
+  ctx.save();
+  ctx.strokeStyle = "rgba(100,116,139,0.12)";
+  ctx.lineWidth = 1;
+  for (let x = step; x < w; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = step; y < h; y += step) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawCrosshair(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const cx = w / 2,
+    cy = h / 2;
+  ctx.save();
+  ctx.strokeStyle = "rgba(100,116,139,0.22)";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  ctx.moveTo(cx, 0);
+  ctx.lineTo(cx, h);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, cy);
+  ctx.lineTo(w, cy);
+  ctx.stroke();
+  ctx.restore();
 }
 
 /** ---------- レンダリング ---------- */
-function render() {
-  // クリア（CSS px基準）
-  const rect = canvas.getBoundingClientRect();
-  ctx.clearRect(0, 0, rect.width, rect.height);
+function renderDraw() {
+  const rect = drawCanvas.getBoundingClientRect();
+  dctx.clearRect(0, 0, rect.width, rect.height);
 
-  // 背景（任意）
-  // ctx.fillStyle = "#ffffff10"; ctx.fillRect(0, 0, rect.width, rect.height);
+  if (showGrid) drawGrid(dctx, rect.width, rect.height);
+  if (showCross) drawCrosshair(dctx, rect.width, rect.height);
 
-  // ゴースト
-  if (ghostToggle.checked) {
-    strokePolyline(ctx, templatePath, {
-      color: "#64748b",
+  // 手本は細い実線
+  if (showGhost) {
+    strokePolyline(dctx, templatePath, {
+      color: "#94a3b8",
       width: 2,
-      dash: [6, 8],
-      alpha: 0.8,
+      alpha: 0.9,
     });
   }
 
-  // ユーザの線
-  strokePolyline(ctx, userPath, { color: "#111827", width: 4, alpha: 1 });
+  strokePolyline(dctx, userPath, { color: "#111827", width: 4, alpha: 1 });
+}
+
+function renderSample() {
+  const rect = sampleCanvas.getBoundingClientRect();
+  sctx.clearRect(0, 0, rect.width, rect.height);
+
+  if (showGrid) drawGrid(sctx, rect.width, rect.height);
+  if (showCross) drawCrosshair(sctx, rect.width, rect.height);
+
+  strokePolyline(sctx, templateSample, {
+    color: "#0f172a",
+    width: 3,
+    alpha: 1,
+  });
+}
+
+function renderAll() {
+  renderDraw();
+  renderSample();
 }
 
 /** ---------- 入力（Pointer Events） ---------- */
 function getPointFromEvent(ev: PointerEvent): Point {
-  const r = canvas.getBoundingClientRect();
-  const x = ev.clientX - r.left;
-  const y = ev.clientY - r.top;
-  return { x, y };
+  const r = drawCanvas.getBoundingClientRect();
+  return { x: ev.clientX - r.left, y: ev.clientY - r.top };
 }
 
 function onPointerDown(ev: PointerEvent) {
-  if (isCompleted) return; // 一筆書き：完了後はクリアが必要
+  if (isCompleted) return;
   isDrawing = true;
   userPath = [getPointFromEvent(ev)];
-  canvas.setPointerCapture(ev.pointerId);
+  drawCanvas.setPointerCapture?.(ev.pointerId);
   ev.preventDefault();
-  render();
+  renderAll();
 }
 
 function onPointerMove(ev: PointerEvent) {
   if (!isDrawing) return;
   userPath.push(getPointFromEvent(ev));
   ev.preventDefault();
-  render();
+  renderAll();
 }
 
 function onPointerUp(ev: PointerEvent) {
   if (!isDrawing) return;
   isDrawing = false;
   isCompleted = true;
-  if (canvas.hasPointerCapture?.(ev.pointerId)) {
-    canvas.releasePointerCapture(ev.pointerId);
+  if (drawCanvas.hasPointerCapture?.(ev.pointerId)) {
+    drawCanvas.releasePointerCapture(ev.pointerId);
   }
   ev.preventDefault();
-  render();
+  finalizeAndScore();
+  renderAll();
 }
 
-/** ---------- スコア（暫定） ---------- */
-// 正規化して低解像度にレンダリングし、ピクセルIoUで類似度%を返す
+/** ---------- スコア ---------- */
 async function computeScoreIoU(
   pathA: Point[],
   pathB: Point[],
@@ -123,8 +195,8 @@ async function computeScoreIoU(
   let inter = 0,
     uni = 0;
   for (let i = 0; i < a.length; i++) {
-    const A = a[i] > 0;
-    const B = b[i] > 0;
+    const A = a[i] > 0,
+      B = b[i] > 0;
     if (A && B) inter++;
     if (A || B) uni++;
   }
@@ -181,47 +253,146 @@ function rasterize(pts: Point[], N: number, stroke: number): Uint8Array {
   return out;
 }
 
-/** ---------- クリア ---------- */
+/** ---------- スムージング＆リサンプリング ---------- */
+function chaikin(pts: Point[], iterations = 1): Point[] {
+  if (pts.length < 3) return pts.slice();
+  let out = pts.slice();
+  for (let it = 0; it < iterations; it++) {
+    const next: Point[] = [out[0]];
+    for (let i = 0; i < out.length - 1; i++) {
+      const a = out[i],
+        b = out[i + 1];
+      const Q = { x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 };
+      const R = { x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 };
+      next.push(Q, R);
+    }
+    next.push(out[out.length - 1]);
+    out = next;
+  }
+  return out;
+}
+
+function resampleByLength(pts: Point[], N: number): Point[] {
+  if (pts.length === 0) return [];
+  if (pts.length === 1) return [pts[0]];
+  const d: number[] = [0];
+  for (let i = 1; i < pts.length; i++) {
+    d[i] =
+      d[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  }
+  const total = d[d.length - 1] || 1;
+  const out: Point[] = new Array(N);
+  let j = 0;
+  for (let k = 0; k < N; k++) {
+    const t = (k / (N - 1)) * total;
+    while (j < d.length - 1 && d[j + 1] < t) j++;
+    const a = pts[j],
+      b = pts[Math.min(j + 1, pts.length - 1)];
+    const seg = d[Math.min(j + 1, d.length - 1)] - d[j] || 1;
+    const u = Math.max(0, Math.min(1, (t - d[j]) / seg));
+    out[k] = { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
+  }
+  return out;
+}
+
+/** ---------- スコア/クリア/UI ---------- */
+function updateScoreUI(score: number | null) {
+  if (score == null || !Number.isFinite(score)) {
+    scoreOut.value = "—";
+    scoreBar.style.width = "0%";
+    scoreBar.style.backgroundColor = "hsl(220 15% 60%)";
+    return;
+  }
+  const pct = Math.max(0, Math.min(100, score));
+  scoreOut.value = `${pct.toFixed(1)}%`;
+  const hue = Math.round((pct / 100) * 120);
+  scoreBar.style.width = `${pct}%`;
+  scoreBar.style.backgroundColor = `hsl(${hue} 90% 45%)`;
+}
+
 function clearAll() {
   userPath = [];
   isDrawing = false;
   isCompleted = false;
-  render();
+  updateScoreUI(null);
+  renderAll();
+}
+
+function finalizeAndScore() {
+  const smoothed = chaikin(userPath, 1);
+  const resampled = resampleByLength(smoothed, 256);
+  userPath = resampled;
+
+  computeScoreIoU(userPath, templatePath).then((score) => {
+    updateScoreUI(score);
+  });
+}
+
+/** ---------- トグルUI ---------- */
+function setToggleStyle(btn: HTMLButtonElement, active: boolean) {
+  btn.setAttribute("aria-pressed", String(active));
+  btn.classList.toggle("bg-slate-900", active);
+  btn.classList.toggle("text-white", active);
+  btn.classList.toggle("bg-white", !active);
+  btn.classList.toggle("text-slate-700", !active);
+  btn.classList.toggle("border", !active);
+  btn.classList.toggle("border-slate-300", !active);
+  btn.classList.toggle("dark:bg-slate-800", !active);
+  btn.classList.toggle("dark:text-slate-200", !active);
+  btn.classList.toggle("dark:border-slate-700", !active);
 }
 
 /** ---------- 初期化 ---------- */
 function init() {
-  // リスナ
-  canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
-  canvas.addEventListener("pointermove", onPointerMove, { passive: false });
+  // 入力
+  drawCanvas.addEventListener("pointerdown", onPointerDown, { passive: false });
+  drawCanvas.addEventListener("pointermove", onPointerMove, { passive: false });
   window.addEventListener("pointerup", onPointerUp, { passive: false });
   window.addEventListener("pointercancel", onPointerUp, { passive: false });
 
   // UI
   shapeSelect.addEventListener("change", () => {
     shape = shapeSelect.value as Shape;
-    updateTemplate();
-    render();
+    updateTemplates();
+    clearAll();
   });
-  ghostToggle.addEventListener("change", () => render());
-  clearBtn.addEventListener("click", () => clearAll());
-  scoreBtn.addEventListener("click", async () => {
-    const score = await computeScoreIoU(userPath, templatePath);
-    scoreOut.value = Number.isFinite(score) ? `${score.toFixed(1)}%` : "—";
+
+  clearBtn.addEventListener("click", () => {
+    clearAll();
+  });
+
+  toggleGhostBtn.addEventListener("click", () => {
+    showGhost = !showGhost;
+    setToggleStyle(toggleGhostBtn, showGhost);
+    renderAll();
+  });
+  toggleGridBtn.addEventListener("click", () => {
+    showGrid = !showGrid;
+    setToggleStyle(toggleGridBtn, showGrid);
+    renderAll();
+  });
+  toggleCrossBtn.addEventListener("click", () => {
+    showCross = !showCross;
+    setToggleStyle(toggleCrossBtn, showCross);
+    renderAll();
   });
 
   // リサイズ
   const handleResize = () => {
-    resizeCanvas();
-    updateTemplate();
-    render();
+    resizeCanvasEl(drawCanvas, dctx);
+    resizeCanvasEl(sampleCanvas, sctx);
+    updateTemplates();
+    renderAll();
   };
   window.addEventListener("resize", handleResize);
   window.addEventListener("orientationchange", handleResize);
 
   // 初期
   handleResize();
-  scoreOut.value = "—";
+  setToggleStyle(toggleGhostBtn, showGhost);
+  setToggleStyle(toggleGridBtn, showGrid);
+  setToggleStyle(toggleCrossBtn, showCross);
+  updateScoreUI(null);
 }
 
 init();

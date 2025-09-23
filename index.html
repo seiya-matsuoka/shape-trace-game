@@ -34,16 +34,32 @@
           </select>
         </div>
 
-        <div class="flex items-center gap-2">
-          <input
-            id="ghostToggle"
-            type="checkbox"
-            class="rounded border-slate-300 dark:border-slate-700"
-            checked
-          />
-          <label for="ghostToggle" class="text-sm"
-            >手本（ゴースト）を表示</label
-          >
+        <!-- 表示/非表示トグル（ボタン3種） -->
+        <div class="space-y-2">
+          <div class="text-sm font-medium">表示</div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              id="toggleGhost"
+              class="rounded-md bg-slate-900 px-3 py-2 text-white hover:opacity-90"
+              aria-pressed="true"
+            >
+              手本
+            </button>
+            <button
+              id="toggleGrid"
+              class="rounded-md bg-slate-900 px-3 py-2 text-white hover:opacity-90"
+              aria-pressed="true"
+            >
+              グリッド
+            </button>
+            <button
+              id="toggleCross"
+              class="rounded-md bg-slate-900 px-3 py-2 text-white hover:opacity-90"
+              aria-pressed="true"
+            >
+              十字
+            </button>
+          </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -53,13 +69,18 @@
           >
             クリア
           </button>
-          <button
-            id="scoreBtn"
-            class="rounded-md bg-indigo-600 px-3 py-2 text-white hover:opacity-90"
-          >
-            スコア判定
-          </button>
           <output id="scoreOut" class="ml-1 text-lg font-semibold">—</output>
+        </div>
+
+        <!-- スコア・ゲージ -->
+        <div
+          class="mt-1 h-2 w-full max-w-xs rounded-full bg-slate-200 dark:bg-slate-700"
+        >
+          <div
+            id="scoreBar"
+            class="h-2 rounded-full bg-indigo-500 transition-all"
+            style="width: 0%"
+          ></div>
         </div>
 
         <p class="text-xs opacity-70">
@@ -68,14 +89,24 @@
       </section>
 
       <!-- Canvas -->
-      <section class="md:col-span-2">
-        <!-- 正方形を維持するラッパ -->
+      <section class="grid grid-cols-1 gap-4 md:col-span-2 md:grid-cols-2">
+        <!-- 描画エリア -->
         <div
           class="aspect-square relative w-full overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-slate-800"
         >
           <canvas
             id="drawCanvas"
-            class="z-10 block h-full w-full touch-none select-none"
+            class="block h-full w-full touch-none select-none"
+          ></canvas>
+        </div>
+
+        <!-- 手本エリア -->
+        <div
+          class="aspect-square relative w-full overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-slate-800"
+        >
+          <canvas
+            id="sampleCanvas"
+            class="block h-full w-full select-none"
           ></canvas>
         </div>
       </section>
