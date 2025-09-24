@@ -23,12 +23,12 @@ const toggleCrossBtn = document.getElementById(
 const scoreOut = document.getElementById("scoreOut") as HTMLOutputElement;
 const scoreBar = document.getElementById("scoreBar") as HTMLDivElement;
 
+const bestOut = document.getElementById("bestOut") as HTMLOutputElement;
+
 const dctx = drawCanvas.getContext("2d")!;
 const sctx = sampleCanvas.getContext("2d")!;
 
 const sizeSelect = document.getElementById("sizeSelect") as HTMLSelectElement;
-
-let sizeKey: "lg" | "sm" = "lg";
 
 /** ---------- 状態 ---------- */
 let shape: Shape = "circle";
@@ -41,6 +41,11 @@ let isCompleted = false;
 let showGhost = true;
 let showGrid = true;
 let showCross = true;
+
+let sizeKey: "lg" | "sm" = "lg";
+
+const SETTINGS_KEY = "stg_settings_v1";
+const BEST_PREFIX = "stg_best_v1:";
 
 /** ---------- DPR / リサイズ ---------- */
 function resizeCanvasEl(cv: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
@@ -329,7 +334,73 @@ function finalizeAndScore() {
 
   computeScoreIoU(userPath, templatePath).then((score) => {
     updateScoreUI(score);
+
+    if (Number.isFinite(score)) {
+      updateBestIfGreater(score);
+      updateBestUI();
+    }
   });
+}
+
+function bestKeyForCurrent(): string {
+  // サイズは無視
+  return `${BEST_PREFIX}${shape}|g${Number(showGhost)}|gr${Number(showGrid)}|c${Number(showCross)}`;
+}
+
+function loadBest(): number | null {
+  const raw = localStorage.getItem(bestKeyForCurrent());
+  const val = raw != null ? Number(raw) : NaN;
+  return Number.isFinite(val) ? val : null;
+}
+
+function updateBestIfGreater(score: number) {
+  const current = loadBest();
+  if (current == null || score > current) {
+    localStorage.setItem(bestKeyForCurrent(), String(score));
+  }
+}
+
+function updateBestUI() {
+  const b = loadBest();
+  bestOut.value = b == null ? "—" : `${b.toFixed(1)}%`;
+}
+
+type SavedSettings = {
+  shape: Shape;
+  sizeKey: "lg" | "sm";
+  showGhost: boolean;
+  showGrid: boolean;
+  showCross: boolean;
+};
+
+function saveSettings() {
+  const data: SavedSettings = {
+    shape,
+    sizeKey,
+    showGhost,
+    showGrid,
+    showCross,
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+}
+
+function loadSettings(): SavedSettings | null {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw) as Partial<SavedSettings>;
+    const s = (obj.shape as Shape) ?? "circle";
+    const sz = (obj.sizeKey === "sm" ? "sm" : "lg") as "lg" | "sm";
+    return {
+      shape: s,
+      sizeKey: sz,
+      showGhost: !!obj.showGhost,
+      showGrid: !!obj.showGrid,
+      showCross: !!obj.showCross,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /** ---------- トグルUI ---------- */
@@ -358,13 +429,17 @@ function init() {
   shapeSelect.addEventListener("change", () => {
     shape = shapeSelect.value as Shape;
     updateTemplates();
+    saveSettings();
     clearAll();
+    updateBestUI();
   });
 
   sizeSelect.addEventListener("change", () => {
     sizeKey = (sizeSelect.value as "lg" | "sm") ?? "lg";
     updateTemplates();
+    saveSettings();
     clearAll();
+    updateBestUI();
   });
 
   clearBtn.addEventListener("click", () => {
@@ -374,18 +449,43 @@ function init() {
   toggleGhostBtn.addEventListener("click", () => {
     showGhost = !showGhost;
     setToggleStyle(toggleGhostBtn, showGhost);
+    saveSettings();
     renderAll();
+    updateBestUI();
   });
+
   toggleGridBtn.addEventListener("click", () => {
     showGrid = !showGrid;
     setToggleStyle(toggleGridBtn, showGrid);
+    saveSettings();
     renderAll();
+    updateBestUI();
   });
+
   toggleCrossBtn.addEventListener("click", () => {
     showCross = !showCross;
     setToggleStyle(toggleCrossBtn, showCross);
+    saveSettings();
     renderAll();
+    updateBestUI();
   });
+
+  // 設定復元
+  const loaded = loadSettings();
+  if (loaded) {
+    shape = loaded.shape;
+    sizeKey = loaded.sizeKey;
+    showGhost = loaded.showGhost;
+    showGrid = loaded.showGrid;
+    showCross = loaded.showCross;
+
+    // UIに反映
+    shapeSelect.value = shape;
+    sizeSelect.value = sizeKey;
+    setToggleStyle(toggleGhostBtn, showGhost);
+    setToggleStyle(toggleGridBtn, showGrid);
+    setToggleStyle(toggleCrossBtn, showCross);
+  }
 
   // リサイズ
   const handleResize = () => {
@@ -397,12 +497,25 @@ function init() {
   window.addEventListener("resize", handleResize);
   window.addEventListener("orientationchange", handleResize);
 
+  // キャンバス親のサイズが変わったら描画領域を再計算
+  if ("ResizeObserver" in window) {
+    const ro = new ResizeObserver(() => {
+      resizeCanvasEl(drawCanvas, dctx);
+      resizeCanvasEl(sampleCanvas, sctx);
+      updateTemplates();
+      renderAll();
+    });
+    if (drawCanvas.parentElement) ro.observe(drawCanvas.parentElement);
+    if (sampleCanvas.parentElement) ro.observe(sampleCanvas.parentElement);
+  }
+
   // 初期
   handleResize();
   setToggleStyle(toggleGhostBtn, showGhost);
   setToggleStyle(toggleGridBtn, showGrid);
   setToggleStyle(toggleCrossBtn, showCross);
   updateScoreUI(null);
+  updateBestUI();
 }
 
 init();
