@@ -20,110 +20,108 @@
       <div class="grid grid-cols-12 gap-y-6">
         <div class="hidden md:col-span-1 md:block lg:col-span-2"></div>
 
-        <div class="col-span-12 px-4 md:col-span-10 lg:col-span-8">
+        <div class="col-span-12 px-0 md:col-span-10 md:px-4 lg:col-span-8">
           <!-- 上部ツールバー -->
-          <section class="flex flex-wrap items-end gap-6">
-            <div class="flex min-w-[520px] flex-1 flex-wrap items-end gap-6">
-              <div>
-                <label for="shapeSelect" class="mb-1 block text-sm font-medium"
-                  >形状</label
-                >
-                <select
-                  id="shapeSelect"
-                  class="w-64 rounded-md border-slate-300 md:w-56 dark:border-slate-700"
-                >
-                  <option value="circle">丸</option>
-                  <option value="triangle">三角</option>
-                  <option value="square">四角</option>
-                  <option value="star">星</option>
-                  <option value="pentagon">五角形</option>
-                  <option value="heart">ハート</option>
-                </select>
-              </div>
+          <section class="w-full">
+            <div
+              class="mx-auto flex w-full max-w-[min(92vw,640px)] flex-col gap-4 px-4 md:mx-0 md:max-w-none md:flex-row md:items-end md:justify-between md:px-0"
+            >
+              <div class="flex flex-wrap items-end gap-4">
+                <div>
+                  <label
+                    for="shapeSelect"
+                    class="mb-1 block text-sm font-medium"
+                    >形状</label
+                  >
+                  <select
+                    id="shapeSelect"
+                    class="w-64 rounded-md border-slate-300 md:w-56 dark:border-slate-700"
+                  >
+                    <option value="circle">丸</option>
+                    <option value="triangle">三角</option>
+                    <option value="square">四角</option>
+                    <option value="star">星</option>
+                    <option value="pentagon">五角形</option>
+                    <option value="heart">ハート</option>
+                  </select>
+                </div>
 
-              <div>
-                <label for="sizeSelect" class="mb-1 block text-sm font-medium"
-                  >サイズ</label
-                >
-                <select
-                  id="sizeSelect"
-                  class="w-40 rounded-md border-slate-300 md:w-32 dark:border-slate-700"
-                >
-                  <option value="lg">大</option>
-                  <option value="sm">小</option>
-                </select>
-              </div>
+                <div>
+                  <label for="sizeSelect" class="mb-1 block text-sm font-medium"
+                    >サイズ</label
+                  >
+                  <select
+                    id="sizeSelect"
+                    class="w-40 rounded-md border-slate-300 md:w-32 dark:border-slate-700"
+                  >
+                    <option value="lg">大</option>
+                    <option value="sm">小</option>
+                  </select>
+                </div>
 
-              <div>
-                <div class="mb-1 block text-sm font-medium">表示</div>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    id="toggleGhost"
-                    class="rounded-md bg-slate-900 px-3 py-2 text-white"
-                    aria-pressed="true"
-                  >
-                    手本
-                  </button>
-                  <button
-                    id="toggleGrid"
-                    class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                    aria-pressed="false"
-                  >
-                    グリッド
-                  </button>
-                  <button
-                    id="toggleCross"
-                    class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                    aria-pressed="false"
-                  >
-                    十字
-                  </button>
+                <div>
+                  <div class="mb-1 block text-sm font-medium">表示</div>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      id="toggleGhost"
+                      class="rounded-md bg-slate-900 px-3 py-2 text-white"
+                      aria-pressed="true"
+                    >
+                      手本
+                    </button>
+                    <button
+                      id="toggleGrid"
+                      class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      aria-pressed="false"
+                    >
+                      グリッド
+                    </button>
+                    <button
+                      id="toggleCross"
+                      class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      aria-pressed="false"
+                    >
+                      十字
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div class="min-w-[260px]">
-                <div class="flex items-baseline gap-3">
-                  <span class="text-sm opacity-70">スコア:</span>
-                  <output
-                    id="scoreOut"
-                    class="text-lg font-semibold"
-                    aria-label="現在のスコア"
-                    >—</output
-                  >
-                  <span class="text-sm opacity-70">ベスト:</span>
-                  <output
-                    id="bestOut"
-                    class="text-sm font-medium"
-                    aria-label="ベストスコア"
-                    >—</output
-                  >
-                </div>
-                <div
-                  class="mt-2 h-2 w-full rounded-full bg-slate-500 dark:bg-slate-700"
-                >
-                  <div
-                    id="scoreBar"
-                    class="h-2 rounded-full bg-indigo-500 transition-all"
-                    style="width: 0%"
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="shrink-0">
-              <button
-                id="clearBtn"
-                class="rounded-md bg-indigo-600 px-4 py-2 text-white shadow-sm hover:bg-indigo-700"
-                title="描画とスコアをクリア"
+              <div
+                class="flex items-center gap-4 md:min-w-[360px] md:justify-end"
               >
-                クリア
-              </button>
+                <div class="min-w-[240px] flex-1">
+                  <div class="flex items-baseline gap-3">
+                    <span class="text-sm opacity-70">スコア:</span>
+                    <output id="scoreOut" class="text-lg font-semibold"
+                      >—</output
+                    >
+                    <span class="text-sm opacity-70">ベスト:</span>
+                    <output id="bestOut" class="text-sm font-medium">—</output>
+                  </div>
+                  <div
+                    class="mt-2 h-2 w-full rounded-full bg-slate-500 dark:bg-slate-700"
+                  >
+                    <div
+                      id="scoreBar"
+                      class="h-2 rounded-full bg-indigo-500 transition-all"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                </div>
+                <button
+                  id="clearBtn"
+                  class="shrink-0 rounded-md bg-indigo-600 px-4 py-2 text-white shadow-sm hover:bg-indigo-700"
+                >
+                  クリア
+                </button>
+              </div>
             </div>
           </section>
 
           <section class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             <div
-              class="relative h-[320px] w-full overflow-hidden rounded-2xl bg-white shadow-sm md:h-[min(70vh,38vw)] dark:bg-slate-800"
+              class="relative order-2 mx-auto h-[320px] w-full max-w-[min(92vw,640px)] overflow-hidden rounded-2xl bg-white shadow-sm md:order-1 md:mx-0 md:h-[min(70vh,38vw)] md:max-w-none dark:bg-slate-800"
             >
               <canvas
                 id="sampleCanvas"
@@ -132,7 +130,7 @@
             </div>
 
             <div
-              class="relative h-[320px] w-full overflow-hidden rounded-2xl bg-white shadow-sm md:h-[min(70vh,38vw)] dark:bg-slate-800"
+              class="relative order-1 mx-auto h-[320px] w-full max-w-[min(92vw,640px)] overflow-hidden rounded-2xl bg-white shadow-sm md:order-2 md:mx-0 md:h-[min(70vh,38vw)] md:max-w-none dark:bg-slate-800"
             >
               <canvas
                 id="drawCanvas"
