@@ -29,12 +29,12 @@
 <table>
   <tr>
     <td align="center">
-      <img src="./docs/screenshot_pc.png" alt="PC layout" width="260"><br/>
-      <sub>PC（上：ツールバー / 左：見本 / 右：描画）</sub>
+      <img src="./docs/screenshot_pc.png" alt="PC layout" width="570"><br/>
+      <sub>PC（左：見本 / 右：描画）</sub>
     </td>
-      <td align="center">
-      <img src="./docs/screenshot_mobile.png" alt="Mobile layout" width="260"><br/>
-      <sub>Mobile（上：描画 / 下：見本、中央寄せ</sub>
+    <td align="center">
+      <img src="./docs/screenshot_mobile.png" alt="Mobile layout" width="130"><br/>
+      <sub>Mobile（上：描画 / 下：見本）</sub>
     </td>
   </tr>
 </table>
